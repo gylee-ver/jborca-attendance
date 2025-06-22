@@ -22,7 +22,7 @@ import AttendanceRanking from "./attendance-ranking"
 import TeamAttendance from "../team-attendance/page"
 import AdminPage from "./admin-page"
 import type { User as UserType, AttendanceWithEvent } from "@/lib/supabase"
-import { statsService } from "@/lib/supabase"
+import { statsService, eventService } from "@/lib/supabase"
 
 interface DashboardProps {
   user: UserType
@@ -37,9 +37,11 @@ const calculateAttendanceStats = (attendanceRecords: AttendanceWithEvent[], user
   console.log('전체 출석 기록:', attendanceRecords.length)
   console.log('사용자 입단일:', userJoinDate)
   
-  // 취소되지 않은 이벤트만 필터링
+  // 취소되지 않고 시작된 이벤트만 필터링 (예정 상태 제외)
   let validRecords = attendanceRecords.filter(record => 
-    record.event && record.event.status !== 'cancelled'
+    record.event && 
+    record.event.status !== 'cancelled' && 
+    record.event.status !== 'upcoming'
   )
   
   // 입단일 이후 이벤트만 필터링
@@ -226,6 +228,7 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
   const [rawAttendanceData, setRawAttendanceData] = useState<AttendanceWithEvent[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isUpdatingEvents, setIsUpdatingEvents] = useState(false)
 
   const fetchUserStats = async () => {
     setIsLoading(true)
@@ -257,8 +260,30 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
     }
   }
 
+  // 이벤트 상태 자동 업데이트 함수
+  const checkAndUpdateEventStatuses = async () => {
+    if (isUpdatingEvents) return
+    
+    try {
+      setIsUpdatingEvents(true)
+      await eventService.checkAndUpdateAllEventStatuses()
+    } catch (error) {
+      console.error('이벤트 상태 업데이트 중 오류:', error)
+    } finally {
+      setIsUpdatingEvents(false)
+    }
+  }
+
   useEffect(() => {
     fetchUserStats()
+    
+    // 컴포넌트 마운트 시 이벤트 상태 확인
+    checkAndUpdateEventStatuses()
+    
+    // 5분마다 이벤트 상태 자동 확인
+    const interval = setInterval(checkAndUpdateEventStatuses, 5 * 60 * 1000)
+    
+    return () => clearInterval(interval)
   }, [user.id])
 
   // 새로고침 함수

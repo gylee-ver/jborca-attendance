@@ -393,7 +393,7 @@ export const eventService = {
       
       if (now >= eventDateTime && now < eventEndTime && event.status === 'upcoming') {
         newStatus = 'ongoing'
-        // 이벤트가 시작되면 투표를 실제 출석으로 변환
+        // 이벤트가 시작되면 즉시 투표를 실제 출석으로 변환 (투표 미참여자는 불참 처리)
         await attendanceService.convertVotesToActualAttendance(eventId)
       } else if (now >= eventEndTime && event.status !== 'completed') {
         newStatus = 'completed'
@@ -551,33 +551,58 @@ export const attendanceService = {
     }
   },
 
-  // 이벤트 시작 시 투표를 실제 출석으로 변환
+  // 이벤트 종료 시 투표를 실제 출석으로 변환 (투표 미참여자는 불참 처리)
   async convertVotesToActualAttendance(eventId: string): Promise<{ success: boolean; error: string | null; updatedCount: number }> {
     try {
       // 해당 이벤트의 모든 투표를 actual_status로 변환
-      const { data, error } = await supabase
+      // 투표 미참여자(pending)와 투표하지 않은 사용자는 불참 처리
+      
+      // 1. 참석 예정이었던 사용자들을 출석 처리
+      const { data: attendingData, error: attendingError } = await supabase
         .from('attendance')
         .update({
-          actual_status: supabase.raw(`
-            CASE 
-              WHEN voted_status = 'attending' THEN 'attended'
-              WHEN voted_status = 'absent' THEN 'absent'
-              ELSE 'unknown'
-            END
-          `),
-          confirmed_at: new Date().toISOString()
+          actual_status: 'attended',
+          confirmed_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         })
         .eq('event_id', eventId)
-        .neq('actual_status', 'attended') // 이미 처리된 것은 제외
-        .neq('actual_status', 'absent')   // 이미 처리된 것은 제외
+        .eq('voted_status', 'attending')
+        .in('actual_status', ['unknown', 'late', 'early_leave'])
         .select()
 
-      const updatedCount = data?.length || 0
+      // 2. 불참 선택한 사용자들을 불참 처리
+      const { data: absentData, error: absentError } = await supabase
+        .from('attendance')
+        .update({
+          actual_status: 'absent',
+          confirmed_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('event_id', eventId)
+        .eq('voted_status', 'absent')
+        .in('actual_status', ['unknown', 'late', 'early_leave'])
+        .select()
+
+      // 3. 투표 미참여자들을 불참 처리
+      const { data: pendingData, error: pendingError } = await supabase
+        .from('attendance')
+        .update({
+          actual_status: 'absent',
+          confirmed_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('event_id', eventId)
+        .eq('voted_status', 'pending')
+        .in('actual_status', ['unknown', 'late', 'early_leave'])
+        .select()
+
+      const totalUpdated = (attendingData?.length || 0) + (absentData?.length || 0) + (pendingData?.length || 0)
+      const hasError = attendingError || absentError || pendingError
       
       return { 
-        success: !error, 
-        error: error?.message || null, 
-        updatedCount 
+        success: !hasError, 
+        error: hasError ? (attendingError?.message || absentError?.message || pendingError?.message || '출석 상태 변환 중 오류가 발생했습니다.') : null, 
+        updatedCount: totalUpdated 
       }
     } catch (err) {
       return { 
@@ -683,6 +708,7 @@ export const statsService = {
           `)
           .eq('user_id', user.id)
           .neq('events.status', 'cancelled')
+          .neq('events.status', 'upcoming')
 
         // 입단일이 있으면 해당 날짜 이후 이벤트만 필터링
         if (user.join_date) {
@@ -754,6 +780,7 @@ export const statsService = {
         `)
         .eq('user_id', userId)
         .neq('events.status', 'cancelled')
+        .neq('events.status', 'upcoming')
 
       // 입단일이 있으면 해당 날짜 이후 이벤트만 필터링
       if (user?.join_date) {
@@ -849,6 +876,7 @@ export const statsService = {
         `)
         .eq('user_id', userId)
         .neq('events.status', 'cancelled')
+        .neq('events.status', 'upcoming')
         .order('events.date', { ascending: true })
         .order('events.time', { ascending: true })
 
@@ -865,7 +893,7 @@ export const statsService = {
 
       // 연속 출석 계산 (최근 완료된 이벤트부터 역순으로 체크)
       let consecutiveAttendance = 0
-      const completedEvents = allAttendance?.filter(a => 
+      const completedEvents = allAttendance?.filter((a): a is any => 
         a.event?.status === 'completed' || 
         (a.event?.status === 'ongoing' && a.actual_status !== 'unknown')
       ).reverse() || []
