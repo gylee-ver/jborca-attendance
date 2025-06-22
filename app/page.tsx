@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { User, Shield, Users } from "lucide-react"
 import { authService, type User as UserType } from "@/lib/supabase"
-import Dashboard from "./dashboard/page"
+import Dashboard from "./components/dashboard"
 
 export default function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
