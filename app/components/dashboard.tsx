@@ -419,11 +419,11 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
         {/* 출석 투표 섹션 */}
         <VotingSection user={user} />
 
-        {/* 출석 랭킹 */}
-        <AttendanceRanking onTeamAttendanceClick={() => setCurrentView("team-attendance")} />
-
         {/* 일정 캘린더 */}
         <AttendanceCalendar user={user} />
+
+        {/* 출석 랭킹 */}
+        <AttendanceRanking onTeamAttendanceClick={() => setCurrentView("team-attendance")} />
 
         {/* 관리 버튼들 */}
         <div className="space-y-3">

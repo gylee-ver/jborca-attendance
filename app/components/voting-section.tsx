@@ -222,9 +222,9 @@ export default function VotingSection({ user }: VotingSectionProps) {
     return (
       <Card className="bg-gray-900 border-gray-800">
         <CardHeader className="pb-4">
-          <CardTitle className="text-white flex items-center space-x-2">
+          <CardTitle className="text-yellow-500 flex items-center space-x-2">
             <Calendar className="w-5 h-5" />
-            <span>다가오는 일정에 <span className="text-yellow-500">투표</span>해주세요!</span>
+            <span>투표해주세요!</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -246,9 +246,9 @@ export default function VotingSection({ user }: VotingSectionProps) {
       {/* 헤더 */}
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-white flex items-center space-x-2">
+          <CardTitle className="text-yellow-500 flex items-center space-x-2">
             <Calendar className="w-5 h-5" />
-            <span>다가오는 일정에 <span className="text-yellow-500">투표</span>해주세요!</span>
+            <span>투표해주세요!</span>
           </CardTitle>
           <div className="flex items-center space-x-2">
             {upcomingEvents.length > 1 && (
@@ -400,7 +400,7 @@ export default function VotingSection({ user }: VotingSectionProps) {
                     ? "border-gray-700 text-gray-500 bg-gray-800/50 cursor-not-allowed"
                     : "border-gray-600 text-gray-300 hover:bg-gray-800 hover:border-gray-500"
                 }`}
-                disabled={voteState?.isSubmitted || isCoachingStaff}
+                disabled={!!(voteState?.isSubmitted || isCoachingStaff)}
               >
                 <XCircle className="w-4 h-4 mr-2" />
                 {isCoachingStaff ? "일정 요청 필요" : "불참"}

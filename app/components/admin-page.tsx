@@ -913,18 +913,18 @@ export default function AdminPage({ user, onBack }: AdminPageProps) {
                 </div>
               ) : currentEventVoting ? (
                 <div className="space-y-4">
-                  {/* 투표 통계 */}
+                  {/* 투표 통계 - 모바일 최적화 */}
                   <div className="grid grid-cols-3 gap-2 text-center">
-                    <div className="p-3 bg-green-900/30 rounded-lg border border-green-800">
-                      <div className="text-green-400 font-bold text-lg">{currentEventVoting.attendingUsers.length}</div>
+                    <div className="p-2 bg-green-900/30 rounded-lg border border-green-800">
+                      <div className="text-green-400 font-bold text-base">{currentEventVoting.attendingUsers.length}</div>
                       <div className="text-xs text-gray-400">참석</div>
                     </div>
-                    <div className="p-3 bg-red-900/30 rounded-lg border border-red-800">
-                      <div className="text-red-400 font-bold text-lg">{currentEventVoting.absentUsers.length}</div>
+                    <div className="p-2 bg-red-900/30 rounded-lg border border-red-800">
+                      <div className="text-red-400 font-bold text-base">{currentEventVoting.absentUsers.length}</div>
                       <div className="text-xs text-gray-400">불참</div>
                     </div>
-                    <div className="p-3 bg-yellow-900/30 rounded-lg border border-yellow-800">
-                      <div className="text-yellow-400 font-bold text-lg">{currentEventVoting.pendingUsers.length}</div>
+                    <div className="p-2 bg-yellow-900/30 rounded-lg border border-yellow-800">
+                      <div className="text-yellow-400 font-bold text-base">{currentEventVoting.pendingUsers.length}</div>
                       <div className="text-xs text-gray-400">미투표</div>
                     </div>
                   </div>
@@ -1045,11 +1045,11 @@ export default function AdminPage({ user, onBack }: AdminPageProps) {
               ) : (
                 <div className="space-y-3">
                   {coachingStaffEventsData.map((eventStatus, index) => (
-                    <div key={eventStatus.event.id} className="bg-gray-800/50 rounded-lg p-3 border border-gray-700/50 hover:bg-gray-800/70 transition-colors">
+                    <div key={eventStatus.event.id} className="bg-gray-800/50 rounded-lg p-2 border border-gray-700/50 hover:bg-gray-800/70 transition-colors">
                       {/* 메인 정보 섹션 - 한 줄로 핵심 정보 표시 */}
                       <div className="flex items-center justify-between mb-2">
                         {/* 왼쪽: 이벤트 기본 정보 */}
-                        <div className="flex items-center space-x-3">
+                        <div className="flex items-center space-x-2">
                           <Badge className={`${getEventTypeColor(eventStatus.event.type)} text-white text-xs shrink-0`}>
                             {getEventTypeText(eventStatus.event.type)}
                           </Badge>
@@ -1071,22 +1071,22 @@ export default function AdminPage({ user, onBack }: AdminPageProps) {
                         
                         {/* 오른쪽: 출석률 - 가장 중요한 정보를 크게 표시 */}
                         <div className="text-right">
-                          <div className="text-2xl font-bold text-white leading-none">
+                          <div className="text-xl font-bold text-white leading-none">
                             <span className={eventStatus.attendingCount >= 3 ? 'text-green-400' : 'text-yellow-400'}>
                               {eventStatus.attendingCount}
                             </span>
                             <span className="text-gray-400">/{eventStatus.totalStaff}</span>
                           </div>
-                          <div className="text-xs text-gray-400 mt-1">
+                          <div className="text-xs text-gray-400 mt-0.5">
                             코칭스태프
                           </div>
                         </div>
                       </div>
 
                       {/* 상세 정보 섹션 - 컴팩트하게 정리 */}
-                      <div className="grid grid-cols-3 gap-2 text-xs">
+                      <div className="grid grid-cols-3 gap-1.5 text-xs">
                         {/* 참석 예정 */}
-                        <div className="bg-green-900/20 border border-green-800/30 rounded p-2">
+                        <div className="bg-green-900/20 border border-green-800/30 rounded p-1.5">
                           <div className="flex items-center space-x-1 mb-1">
                             <CheckCircle className="w-3 h-3 text-green-400" />
                             <span className="text-green-400 font-medium">참석 {eventStatus.attendingCount}</span>
@@ -1105,7 +1105,7 @@ export default function AdminPage({ user, onBack }: AdminPageProps) {
                         </div>
 
                         {/* 불참 예정 */}
-                        <div className="bg-red-900/20 border border-red-800/30 rounded p-2">
+                        <div className="bg-red-900/20 border border-red-800/30 rounded p-1.5">
                           <div className="flex items-center space-x-1 mb-1">
                             <XCircle className="w-3 h-3 text-red-400" />
                             <span className="text-red-400 font-medium">불참 {eventStatus.absentCount}</span>
@@ -1131,7 +1131,7 @@ export default function AdminPage({ user, onBack }: AdminPageProps) {
                         </div>
 
                         {/* 미투표 */}
-                        <div className="bg-gray-700/20 border border-gray-600/30 rounded p-2">
+                        <div className="bg-gray-700/20 border border-gray-600/30 rounded p-1.5">
                           <div className="flex items-center space-x-1 mb-1">
                             <Vote className="w-3 h-3 text-gray-400" />
                             <span className="text-gray-400 font-medium">미투표 {eventStatus.pendingCount}</span>
