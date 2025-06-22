@@ -5,6 +5,14 @@ import "./globals.css"
 
 const inter = Inter({ subsets: ["latin"] })
 
+// viewport를 별도로 export
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+}
+
 export const metadata: Metadata = {
   title: "JB ORCA | 출석 관리 시스템",
   description: "JB ORCA 전용 출석 관리 시스템",
@@ -39,12 +47,6 @@ export const metadata: Metadata = {
   robots: {
     index: false, // 검색엔진에서 제외 (팀 내부용)
     follow: false,
-  },
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
   },
 }
 
