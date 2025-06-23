@@ -842,9 +842,9 @@ export default function AdminPage({ user, onBack }: AdminPageProps) {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto p-4 pb-8 space-y-6">
+      <div className="max-w-md mx-auto p-4 pb-8 space-y-6">
         {/* 상단 카드들 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="space-y-4">
           {/* 전체 선수단 실시간 투표 현황 */}
           <Card className="bg-gray-900 border-gray-800">
             <CardHeader>
@@ -1195,7 +1195,7 @@ export default function AdminPage({ user, onBack }: AdminPageProps) {
         </div>
 
         {/* 메인 콘텐츠 영역 */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6">
           {/* 고도화된 내 일정 요청 컴포넌트 */}
           {isCoachingStaff ? (
             <Card className="bg-gray-900 border-gray-800">
