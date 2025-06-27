@@ -121,6 +121,14 @@ export default function VotingSection({ user }: VotingSectionProps) {
   }
 
   const handleAbsentReasonChange = (eventId: string, reason: string) => {
+    // 공백을 제외한 글자 수 계산 (한글 기준)
+    const trimmedReason = reason.replace(/\s/g, '')
+    
+    // 20자 제한 확인
+    if (trimmedReason.length > 20) {
+      return // 20자를 초과하면 입력을 제한
+    }
+    
     updateVoteState(eventId, { absentReason: reason })
   }
 
@@ -128,9 +136,19 @@ export default function VotingSection({ user }: VotingSectionProps) {
     const voteState = voteStates[eventId]
     if (!voteState) return
 
-    if (voteState.selectedOption === "absent" && !voteState.absentReason.trim()) {
-      alert("불참 사유를 입력해주세요.")
-      return
+    if (voteState.selectedOption === "absent") {
+      const trimmedReason = voteState.absentReason.trim()
+      const reasonWithoutSpaces = trimmedReason.replace(/\s/g, '')
+      
+      if (!trimmedReason) {
+        alert("불참 사유를 입력해주세요.")
+        return
+      }
+      
+      if (reasonWithoutSpaces.length < 20) {
+        alert("불참 사유는 공백 제외 20자 이상 입력해주세요.")
+        return
+      }
     }
 
     const event = upcomingEvents.find(e => e.id === eventId)
@@ -410,16 +428,25 @@ export default function VotingSection({ user }: VotingSectionProps) {
             {/* 불참 사유 (코칭스태프가 아닌 경우만) */}
             {voteState?.selectedOption === "absent" && !isCoachingStaff && (
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-300">불참 사유</label>
+                <div className="flex justify-between items-center">
+                  <label className="text-sm font-medium text-gray-300">불참 사유</label>
+                  <span className="text-xs text-gray-400">
+                    {voteState.absentReason.replace(/\s/g, '').length}/20자
+                  </span>
+                </div>
                 <Textarea
                   value={voteState.absentReason}
                   onChange={(e) => handleAbsentReasonChange(currentEvent.id, e.target.value)}
-                  placeholder="불참 사유를 입력해주세요..."
+                  placeholder="불참 사유를 입력해주세요... (공백 제외 20자 필수)"
                   className="bg-gray-800 border-gray-600 text-white placeholder-gray-400 resize-none"
                   rows={2}
                   disabled={voteState.isSubmitted}
-                  maxLength={255}
                 />
+                {voteState.absentReason.replace(/\s/g, '').length < 20 && voteState.absentReason.trim() && (
+                  <p className="text-xs text-yellow-400">
+                    공백 제외 {20 - voteState.absentReason.replace(/\s/g, '').length}자 더 입력해주세요.
+                  </p>
+                )}
               </div>
             )}
 
