@@ -1148,8 +1148,8 @@ export const adminService = {
         return { events: [], error: null }
       }
 
-      // 2. 코칭스태프만 조회 (감독, 수석코치, 투수코치, 배터리코치, 수비코치)
-      const coachingStaffTags = ['감독', '수석코치', '투수코치', '배터리코치', '수비코치']
+      // 2. 코칭스태프만 조회 (감독, 수석코치, 투수코치, 배터리코치, 수비코치, 타격코치)
+      const coachingStaffTags = ['감독', '수석코치', '투수코치', '배터리코치', '수비코치', '타격코치']
       const { data: coachingStaff, error: staffError } = await supabase
         .from('users')
         .select('*')
@@ -1578,7 +1578,7 @@ export const staffRequestService = {
   // 코칭스태프 조회 (대체자 선택용)
   async getCoachingStaff(): Promise<User[]> {
     try {
-      const coachingStaffTags = ['감독', '수석코치', '투수코치', '배터리코치', '수비코치']
+      const coachingStaffTags = ['감독', '수석코치', '투수코치', '배터리코치', '수비코치', '타격코치']
       const { data, error } = await supabase
         .from('users')
         .select('*')
@@ -1719,8 +1719,8 @@ export const staffRequestService = {
           return { canApprove: false, reason: '단장은 감독의 요청만 승인할 수 있습니다.' }
         }
       } else if (approver.tag === '감독') {
-        // 감독은 수석코치, 투수코치, 배터리코치, 수비코치 승인 가능
-        const coachTags = ['수석코치', '투수코치', '배터리코치', '수비코치']
+        // 감독은 수석코치, 투수코치, 배터리코치, 수비코치, 타격코치 승인 가능
+        const coachTags = ['수석코치', '투수코치', '배터리코치', '수비코치', '타격코치']
         if (coachTags.includes(requester.tag || '')) {
           return { canApprove: true }
         } else {

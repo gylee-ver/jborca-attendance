@@ -27,7 +27,7 @@ export default function VotingSection({ user }: VotingSectionProps) {
 
   // 코칭스태프 여부 확인
   const isCoachingStaff = user.role === 'manager' && user.tag && 
-    ['감독', '수석코치', '투수코치', '배터리코치', '수비코치'].includes(user.tag)
+    ['감독', '수석코치', '투수코치', '배터리코치', '수비코치', '타격코치'].includes(user.tag)
 
   const calculateTimeUntilEvent = useCallback((eventDate: string, eventTime: string) => {
     const now = new Date()

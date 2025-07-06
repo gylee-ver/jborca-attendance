@@ -174,7 +174,7 @@ export default function AdminPage({ user, onBack }: AdminPageProps) {
 
   // 코칭스태프 권한 확인
   const isCoachingStaff = user.role === 'manager' && user.tag && 
-    ['감독', '수석코치', '투수코치', '배터리코치', '수비코치'].includes(user.tag)
+    ['감독', '수석코치', '투수코치', '배터리코치', '수비코치', '타격코치'].includes(user.tag)
 
   // 실시간 투표 현황 데이터 로드 (Supabase 연동)
   const loadVotingStatus = async () => {
@@ -1575,7 +1575,7 @@ export default function AdminPage({ user, onBack }: AdminPageProps) {
                   <AlertCircle className="w-12 h-12 text-yellow-500 mx-auto mb-3" />
                   <p className="text-gray-400 mb-2">이 기능은 코칭스태프만 사용할 수 있습니다.</p>
                   <p className="text-sm text-gray-500">
-                    감독, 수석코치, 투수코치, 배터리코치, 수비코치만 접근 가능합니다.
+                    감독, 수석코치, 투수코치, 배터리코치, 수비코치, 타격코치만 접근 가능합니다.
                   </p>
                 </div>
               </CardContent>
