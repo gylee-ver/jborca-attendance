@@ -390,22 +390,36 @@ export const eventService = {
       const eventEndTime = new Date(eventDateTime.getTime() + 3 * 60 * 60 * 1000) // 3시간 후
 
       let newStatus = event.status
+      let shouldConvertAttendance = false
       
       if (now >= eventDateTime && now < eventEndTime && event.status === 'upcoming') {
         newStatus = 'ongoing'
-        // 이벤트가 시작되면 즉시 투표를 실제 출석으로 변환 (투표 미참여자는 불참 처리)
-        await attendanceService.convertVotesToActualAttendance(eventId)
+        shouldConvertAttendance = true
       } else if (now >= eventEndTime && event.status !== 'completed') {
         newStatus = 'completed'
+        shouldConvertAttendance = true
       }
 
+      // 이벤트 상태 변경
       if (newStatus !== event.status) {
         const { error: updateError } = await supabase
           .from('events')
           .update({ status: newStatus })
           .eq('id', eventId)
 
-        return { success: !updateError, error: updateError?.message || null }
+        if (updateError) {
+          return { success: false, error: updateError.message }
+        }
+      }
+
+      // 출석 상태 변환 (ongoing 또는 completed로 바뀔 때)
+      if (shouldConvertAttendance) {
+        const { success: convertSuccess, error: convertError } = await attendanceService.convertVotesToActualAttendance(eventId)
+        
+        if (!convertSuccess) {
+          console.error('출석 상태 변환 실패:', convertError)
+          // 출석 상태 변환 실패해도 이벤트 상태 업데이트는 성공으로 처리
+        }
       }
 
       return { success: true, error: null }
