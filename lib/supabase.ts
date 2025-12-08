@@ -16,6 +16,7 @@ export interface User {
   phone?: string
   position?: string
   join_date?: string  // 입단 날짜 추가
+  total_points?: number // 포인트 제도용
   is_active: boolean
   last_login_at?: string
   created_at: string
@@ -62,6 +63,16 @@ export interface UserStats {
   current_streak: number
   created_at: string
   updated_at: string
+}
+
+export interface PointLog {
+  id: string
+  user_id: string
+  admin_id?: string
+  category: 'participation' | 'game' | 'team' | 'penalty'
+  reason: string
+  points: number
+  created_at: string
 }
 
 // 확장된 타입 정의
@@ -290,7 +301,7 @@ export const eventService = {
     is_mandatory?: boolean
     required_staff_count?: number
     created_by: string
-  }): Promise<{ event: Event | null; error: string | null }> {
+  }): Promise<{ success: boolean; event: Event | null; error: string | null }> {
     try {
       const { data, error } = await supabase
         .from('events')
@@ -311,7 +322,7 @@ export const eventService = {
 
       if (error) {
         console.error('이벤트 생성 오류:', error)
-        return { event: null, error: '이벤트 생성 중 오류가 발생했습니다.' }
+        return { success: false, event: null, error: '이벤트 생성 중 오류가 발생했습니다.' }
       }
 
       // 모든 사용자에 대해 출석 레코드 생성
@@ -322,10 +333,10 @@ export const eventService = {
         // 이벤트는 생성되었으므로 경고만 출력
       }
 
-      return { event: data, error: null }
+      return { success: true, event: data, error: null }
     } catch (err) {
       console.error('이벤트 생성 예외:', err)
-      return { event: null, error: '이벤트 생성 중 오류가 발생했습니다.' }
+      return { success: false, event: null, error: '이벤트 생성 중 오류가 발생했습니다.' }
     }
   },
 
@@ -349,21 +360,37 @@ export const eventService = {
     }
   },
 
-  // PostgreSQL 함수를 사용한 이벤트 삭제
+  // 이벤트 삭제 (매니저만 가능) - RPC 대신 직접 삭제
   async deleteEvent(eventId: string, userId: string): Promise<{ success: boolean; error: string | null }> {
     try {
-      const { data, error } = await supabase
-        .rpc('delete_event_with_attendance', {
-          event_id_param: eventId,
-          user_id_param: userId
-        })
+      // 1. 관련 출석 데이터 삭제
+      const { error: attendanceError } = await supabase
+        .from('attendance')
+        .delete()
+        .eq('event_id', eventId)
+
+      if (attendanceError) {
+        console.error('출석 데이터 삭제 오류:', attendanceError)
+      }
+
+      // 2. 스태프 요청 데이터 삭제 (참조 무결성)
+      const { error: requestError } = await supabase
+        .from('staff_requests')
+        .delete()
+        .eq('event_id', eventId)
+
+      if (requestError) {
+        console.error('스태프 요청 데이터 삭제 오류:', requestError)
+      }
+
+      // 3. 이벤트 삭제
+      const { error } = await supabase
+        .from('events')
+        .delete()
+        .eq('id', eventId)
 
       if (error) {
         return { success: false, error: error.message }
-      }
-
-      if (!data.success) {
-        return { success: false, error: data.error }
       }
 
       return { success: true, error: null }
@@ -994,8 +1021,8 @@ export const statsService = {
     }
   },
 
-  // 사용자의 원시 출석 데이터 가져오기 (대안 방법)
-  async getUserRawAttendanceData(userId: string): Promise<{
+  // 사용자의 원시 출석 데이터 가져오기 (대안 방법) - V2로 이름 변경하여 캐시 회피
+  async getUserRawAttendanceDataV2(userId: string): Promise<{
     attendanceRecords: AttendanceWithEvent[]
     error: string | null
   }> {
@@ -1038,16 +1065,6 @@ export const statsService = {
         const dateTimeA = new Date(`${a.event?.date}T${a.event?.time || '00:00'}:00`)
         const dateTimeB = new Date(`${b.event?.date}T${b.event?.time || '00:00'}:00`)
         return dateTimeA.getTime() - dateTimeB.getTime()
-      })
-
-      console.log('결합된 출석 데이터:', {
-        총개수: attendanceRecords.length,
-        샘플: attendanceRecords.slice(0, 3).map(r => ({
-          title: r.event?.title,
-          date: r.event?.date,
-          actual_status: r.actual_status,
-          event_status: r.event?.status
-        }))
       })
 
       return { attendanceRecords, error: null }
@@ -1731,6 +1748,94 @@ export const staffRequestService = {
       }
     } catch (error) {
       return { canApprove: false, reason: '권한 확인 중 오류가 발생했습니다.' }
+    }
+  }
+}
+
+// 포인트 관련 서비스
+export const pointService = {
+  // 포인트 내역 조회
+  async getPointLogs(userId: string) {
+    try {
+      const { data, error } = await supabase
+        .from('point_logs')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+      
+      return { data: data || [], error: error?.message || null }
+    } catch (error) {
+      return { data: [], error: '포인트 내역 조회 중 오류가 발생했습니다.' }
+    }
+  },
+
+  // 전체 랭킹 조회
+  async getRanking() {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('is_active', true)
+        .order('total_points', { ascending: false })
+        .order('name', { ascending: true }) // 동점자 이름순
+      
+      return { data: data || [], error: error?.message || null }
+    } catch (error) {
+      return { data: [], error: '랭킹 조회 중 오류가 발생했습니다.' }
+    }
+  },
+
+  // 모든 활성 사용자 조회 (포인트 부여 대상 선택용)
+  async getAllUsers() {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('is_active', true)
+        .order('number', { ascending: true }) // 등번호순 정렬
+      
+      return { data: data || [], error: error?.message || null }
+    } catch (error) {
+      return { data: [], error: '사용자 목록 조회 중 오류가 발생했습니다.' }
+    }
+  },
+
+  // (관리자용) 포인트 부여/차감
+  async addPointLog(
+    userId: string, 
+    adminId: string, 
+    category: string, 
+    reason: string, 
+    points: number
+  ) {
+    try {
+      const { error } = await supabase
+        .from('point_logs')
+        .insert({
+          user_id: userId,
+          admin_id: adminId,
+          category,
+          reason,
+          points
+        })
+      
+      return { success: !error, error: error?.message || null }
+    } catch (error) {
+      return { success: false, error: '포인트 처리 중 오류가 발생했습니다.' }
+    }
+  },
+
+  // (관리자용) 포인트 내역 삭제
+  async deletePointLog(logId: string) {
+    try {
+      const { error } = await supabase
+        .from('point_logs')
+        .delete()
+        .eq('id', logId)
+      
+      return { success: !error, error: error?.message || null }
+    } catch (error) {
+      return { success: false, error: '포인트 삭제 중 오류가 발생했습니다.' }
     }
   }
 } 

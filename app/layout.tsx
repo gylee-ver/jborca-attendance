@@ -58,6 +58,7 @@ export default function RootLayout({
   return (
     <html lang="ko" className="dark">
       <head>
+        <link rel="stylesheet" as="style" crossOrigin="anonymous" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
         <link rel="icon" href="/jborca-favicon.ico" sizes="any" />
         <link rel="apple-touch-icon" href="/jborca-favicon.ico" />
         <meta name="theme-color" content="#111827" />
@@ -65,21 +66,28 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="format-detection" content="telephone=no" />
       </head>
-      <body className={inter.className} suppressHydrationWarning={true}>
-        <div className="min-h-screen flex flex-col">
-          {/* 메인 콘텐츠 */}
-          <main className="flex-1">
-            {children}
-          </main>
-          
-          {/* 전역 푸터 */}
-          <footer className="bg-gray-900 border-t border-gray-800 py-4 px-4">
-            <div className="max-w-md mx-auto text-center">
-              <p className="text-gray-400 text-sm">
+      <body className="font-[Pretendard] tracking-tight" suppressHydrationWarning={true}>
+        {/* 모바일 뷰포트 제한 컨테이너 */}
+        <div className="min-h-screen bg-[#111] flex justify-center items-center sm:items-start">
+          <div className="w-full max-w-[390px] min-h-screen bg-black shadow-2xl relative flex flex-col border-x border-zinc-900">
+            {/* 메인 콘텐츠 */}
+            <main className="flex-1">
+              {children}
+            </main>
+            
+            {/* 전역 푸터 */}
+            <footer className="bg-black border-t border-zinc-900 py-8 text-center pb-20">
+              <p className="text-zinc-500 text-xs font-bold tracking-[0.2em] mb-1">
+                RIDE THE WAVE
+              </p>
+              <p className="text-zinc-700 text-[10px] tracking-wider">
+                JB ORCA 2026
+              </p>
+              <p className="text-zinc-800 text-[9px] mt-2">
                 made by. 단장 이건용
               </p>
-            </div>
-          </footer>
+            </footer>
+          </div>
         </div>
       </body>
     </html>
