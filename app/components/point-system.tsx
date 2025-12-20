@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Trophy, TrendingUp, Plus, History, Award, User as UserIcon, ChevronDown, ChevronUp } from "lucide-react"
-import { pointService, type User, type PointLog, supabase } from "@/lib/supabase"
+import { pointService, type User, type PointLog } from "@/lib/supabase"
 
 // 기획안 기반 포인트 항목 정의
 const POINT_RULES = {

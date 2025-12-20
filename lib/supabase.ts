@@ -1165,14 +1165,12 @@ export const adminService = {
         return { events: [], error: null }
       }
 
-      // 2. 코칭스태프만 조회 (감독, 수석코치, 투수코치, 배터리코치, 수비코치, 타격코치)
-      const coachingStaffTags = ['감독', '수석코치', '투수코치', '배터리코치', '수비코치', '타격코치']
+      // 2. 코칭스태프 전체 조회 (태그 누락된 코치도 포함)
       const { data: coachingStaff, error: staffError } = await supabase
         .from('users')
         .select('*')
         .eq('is_active', true)
         .eq('role', 'manager')
-        .in('tag', coachingStaffTags)
         .order('tag')
 
       if (staffError) {
@@ -1728,24 +1726,24 @@ export const staffRequestService = {
       }
 
       // 권한 체계 확인
-      if (approver.tag === '단장') {
-        // 단장은 감독만 승인 가능
-        if (requester.tag === '감독') {
+      // 요청자가 감독인 경우: 단장/부단장만 승인 가능
+      if (requester.tag === '감독') {
+        if (approver.tag === '단장' || approver.tag === '부단장') {
           return { canApprove: true }
-        } else {
-          return { canApprove: false, reason: '단장은 감독의 요청만 승인할 수 있습니다.' }
         }
-      } else if (approver.tag === '감독') {
-        // 감독은 수석코치, 투수코치, 배터리코치, 수비코치, 타격코치 승인 가능
-        const coachTags = ['수석코치', '투수코치', '배터리코치', '수비코치', '타격코치']
-        if (coachTags.includes(requester.tag || '')) {
-          return { canApprove: true }
-        } else {
-          return { canApprove: false, reason: '감독은 코치진의 요청만 승인할 수 있습니다.' }
-        }
-      } else {
-        return { canApprove: false, reason: '승인 권한이 없습니다.' }
+        return { canApprove: false, reason: '감독의 요청은 단장/부단장만 승인할 수 있습니다.' }
       }
+
+      // 요청자가 코치진인 경우: 감독만 승인 가능
+      const coachTags = ['수석코치', '투수코치', '배터리코치', '수비코치', '타격코치']
+      if (coachTags.includes(requester.tag || '')) {
+        if (approver.tag === '감독') {
+          return { canApprove: true }
+        }
+        return { canApprove: false, reason: '코치진의 요청은 감독만 승인할 수 있습니다.' }
+      }
+
+      return { canApprove: false, reason: '승인 권한이 없습니다.' }
     } catch (error) {
       return { canApprove: false, reason: '권한 확인 중 오류가 발생했습니다.' }
     }
@@ -1757,13 +1755,9 @@ export const pointService = {
   // 포인트 내역 조회
   async getPointLogs(userId: string) {
     try {
-      const { data, error } = await supabase
-        .from('point_logs')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-      
-      return { data: data || [], error: error?.message || null }
+      const res = await fetch(`/api/points/logs?userId=${userId}`)
+      const json = await res.json()
+      return { data: json.data || [], error: json.error || null }
     } catch (error) {
       return { data: [], error: '포인트 내역 조회 중 오류가 발생했습니다.' }
     }
@@ -1809,17 +1803,14 @@ export const pointService = {
     points: number
   ) {
     try {
-      const { error } = await supabase
-        .from('point_logs')
-        .insert({
-          user_id: userId,
-          admin_id: adminId,
-          category,
-          reason,
-          points
-        })
-      
-      return { success: !error, error: error?.message || null }
+      const res = await fetch('/api/points/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, adminId, category, reason, points })
+      })
+
+      const json = await res.json()
+      return { success: res.ok && json.success, error: json.error || null }
     } catch (error) {
       return { success: false, error: '포인트 처리 중 오류가 발생했습니다.' }
     }

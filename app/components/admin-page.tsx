@@ -67,11 +67,11 @@ export default function AdminPage({ user, onBack }: AdminPageProps) {
 
   // Permissions
   // 코치 일정 탭 접근 권한: 단장 추가
-  const isCoachingStaff = user.role === 'manager' && user.tag && 
-    ['단장', '감독', '수석코치', '투수코치', '배터리코치', '수비코치', '타격코치'].includes(user.tag)
+  // 코치 일정 탭 접근: 모든 매니저 허용 (태그가 비어있는 코치도 접근 가능)
+  const isCoachingStaff = user.role === 'manager'
   
   const canManageStaffRequests = user.role === 'manager' && user.tag && 
-    ['단장', '감독'].includes(user.tag)
+    ['단장', '부단장', '감독'].includes(user.tag)
 
   // Data Fetching
   const loadVotingStatus = async () => {
@@ -192,15 +192,15 @@ export default function AdminPage({ user, onBack }: AdminPageProps) {
     return allStaffRequests.filter(req => {
       const requesterTag = req.requester?.tag
       
-      if (user.tag === '단장') {
-        // Rule 1: 단장은 감독의 일정만 관리한다.
+      if (['단장', '부단장'].includes(user.tag || '')) {
+        // Rule 1: 단장/부단장은 감독의 요청만 관리한다.
         return requesterTag === '감독'
       } else if (user.tag === '감독') {
-        // Rule 2: 감독은 코치의 일정만 관리한다.
+        // Rule 2: 감독은 코치진 요청을 관리한다.
         const coachTags = ['수석코치', '투수코치', '배터리코치', '수비코치', '타격코치']
         return coachTags.includes(requesterTag || '')
       }
-      // 그 외 관리자는 볼 수 없음 (혹은 코치 본인은 자신의 요청을 볼 수도 있지만 여기는 관리자 페이지)
+      // 그 외 관리자는 볼 수 없음
       return false
     })
   }
