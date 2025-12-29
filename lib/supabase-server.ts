@@ -11,3 +11,4 @@ export const createAdminSupabaseClient = () => {
   return createClient(supabaseUrl, serviceKey)
 }
 
+

@@ -1,3 +1,5 @@
+export const runtime = 'nodejs'
+
 import { NextResponse } from 'next/server'
 import { createAdminSupabaseClient } from '@/lib/supabase-server'
 
@@ -26,4 +28,5 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: error?.message || '서버 오류가 발생했습니다.' }, { status: 500 })
   }
 }
+
 
